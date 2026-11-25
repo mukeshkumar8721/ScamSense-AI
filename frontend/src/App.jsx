@@ -1,20 +1,32 @@
 
 import React, { useState } from "react";
 import { ShieldCheck, Link, Mail, MessageSquare, Search } from "lucide-react";
+import { analyzeContent } from "./api";
 
 export default function App() {
   const [input, setInput] = useState("");
-  const [result, setResult] = useState("");
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  function analyzeInput() {
+  async function handleAnalyze() {
     if (!input.trim()) {
-      setResult("Please enter a message or URL to analyse.");
+      setResult({ message: "Please enter content to analyse." });
       return;
     }
 
-    setResult(
-      "Submission received. Connect the ScamSense detection API to analyse this content."
-    );
+    setLoading(true);
+    setResult(null);
+
+    try {
+      const data = await analyzeContent(input);
+      setResult(data);
+    } catch (error) {
+      setResult({
+        message: "Cannot connect to ScamSense backend. Please try again."
+      });
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -31,15 +43,12 @@ export default function App() {
         <section className="hero">
           <span className="eyebrow">AI-POWERED CYBERSECURITY</span>
           <h1>Stay one step ahead of <span>digital threats.</span></h1>
-          <p>
-            Analyse suspicious messages and links with your intelligent
-            cybersecurity assistant.
-          </p>
+          <p>Analyse suspicious messages and links with your cybersecurity assistant.</p>
         </section>
 
         <section className="analyser">
           <h2>Threat Analysis</h2>
-          <p>Paste a suspicious message, email content or URL below.</p>
+          <p>Paste suspicious message or email content below.</p>
 
           <div className="input-label">
             <MessageSquare size={18} />
@@ -49,15 +58,28 @@ export default function App() {
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Paste suspicious content here..."
+            placeholder="Paste content here..."
           />
 
-          <button onClick={analyzeInput}>
+          <button onClick={handleAnalyze} disabled={loading}>
             <Search size={18} />
-            Analyse Content
+            {loading ? "Analysing..." : "Analyse Content"}
           </button>
 
-          {result && <div className="result">{result}</div>}
+          {result && (
+            <div className="result">
+              <h3>{result.risk_level || "Analysis Result"}</h3>
+              <p>{result.message}</p>
+
+              {result.indicators?.length > 0 && (
+                <ul>
+                  {result.indicators.map((item, index) => (
+                    <li key={index}>{item}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
         </section>
 
         <section className="features">
