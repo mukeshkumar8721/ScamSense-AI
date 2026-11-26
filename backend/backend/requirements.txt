@@ -1,8 +1,8 @@
+
 fastapi
 uvicorn[standard]
 python-dotenv
-google-generativeai
+google-genai
+langgraph
 scikit-learn
-pandas
-numpy
-requests
+httpx
